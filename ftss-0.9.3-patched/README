@@ -1,0 +1,82 @@
+ftss - FableTech Server Status for Apache
+
+
+1. Motivation
+
+Apache's status module is an easy way to get information about what your
+webserver is doing - at any time, except when you need that information.
+Because this information is normally gathered via the server-status page,
+it will is unavailable when the webserver is not responding. The system
+administrator can restart the daemon and hope to get at glimpse of the
+server-status page, a tiny clue about what is causing the trouble, before
+the server gets overloaded again.
+
+This project aims at helping the system administrator get his information
+in crisis situations.
+
+
+2. Setting up Apache
+
+2.1 You must enable mod_status with a line like this
+
+ LoadModule status_module modules/mod_status.so
+
+The module is most likely already loaded or compiled into Apache's
+main executable.
+
+
+2.2 You must configure Apache to use a "name based" shared memory segment
+for the scoreboard with a line like this
+
+ ScoreBoardFile /var/run/apache_status
+
+If you have more than one instance of Apache running on the same host,
+each instance MUST have its own file.
+
+
+2.3 You should enable extended status with a line like this
+
+ ExtendedStatus On
+
+This will make Apache's status module store information in the scoreboard
+about the client, the vhost and the request being made. 
+
+
+2.4 Sample configuration
+
+LoadModule status_module modules/mod_status.so
+<IfModule mod_status.c>
+  ScoreBoardFile /var/run/apache_status
+  ExtendedStatus On
+  <Location /server-status>
+    SetHandler server-status
+    Order deny,allow
+    Deny from all
+    Allow from localhost ip6-localhost
+#    Allow from .example.com
+  </Location>
+</IfModule>
+
+
+3. Using ftss
+
+3.1 Running the program
+
+The program requires one argument; The path to the scoreboard file.
+
+It will print out a line for each worker thread, and each line will
+contain five tab-seperated fields:
+- the process id
+- the status (see the server-status page for a key)
+- the client
+- the vhost
+- the request line
+
+For example:
+# ftss /var/run/apache_status
+13762   K       127.0.0.1       127.0.0.1       GET / HTTP/1.1
+13763   _
+13764   _
+13765   _
+13766   _
+13767   _

@@ -1,0 +1,45 @@
+--- src/ftss.c	2009-11-03 05:29:25.000000000 +0900
++++ src/ftss.c	2019-03-28 10:49:57.167461401 +0900
+@@ -87,13 +87,13 @@
+ 	//printf("p=%p, size = %u\n", p, (unsigned int)size);
+ 
+ 	global = p;
+-	p += sizeof(*global);
++	p += APR_ALIGN_DEFAULT(sizeof(*global));
+ 
+ 	if (size != (
+-			sizeof(*global)
+-			+ sizeof(*parent)
++			APR_ALIGN_DEFAULT(sizeof(*global))
++			+ APR_ALIGN_DEFAULT(sizeof(*parent))
+ 				* global->server_limit
+-			+ sizeof(*server)
++			+ APR_ALIGN_DEFAULT(sizeof(*server))
+ 				* global->server_limit
+ 				* global->thread_limit
+ #ifdef SCOREBOARD_BALANCERS
+@@ -118,7 +118,7 @@
+ */
+ 
+ 	parent = p;
+-	p += sizeof(*parent) * global->server_limit;
++	p += APR_ALIGN_DEFAULT(sizeof(*parent)) * global->server_limit;
+ 
+ /*
+ 	for (i=0; i<global->server_limit; i++) {
+@@ -128,10 +128,13 @@
+ */
+ 
+ 	for (i=0; i<global->server_limit; i++) {
+-		if (!parent[i].pid) continue;
++		if (!parent[i].pid) {
++			p += APR_ALIGN_DEFAULT(sizeof(*server)) * global->thread_limit;
++			continue;
++		}
+ 		for (j=0; j<global->thread_limit; j++) {
+ 			server = p;
+-			p += sizeof(*server);
++			p += APR_ALIGN_DEFAULT(sizeof(*server));
+ 			if (server->status == SERVER_DEAD) continue;
+ 			if (server->status >= SERVER_NUM_STATUS) continue;
+ 			//printf("status = %d\n", server->status);
